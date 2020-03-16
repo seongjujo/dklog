@@ -1,11 +1,11 @@
 package jo.seongju.dklog.service.impl;
 
 import jo.seongju.dklog.domain.LogStatistic;
+import jo.seongju.dklog.exception.WriteLogException;
 import jo.seongju.dklog.service.LogWriter;
 
 import java.io.*;
 import java.text.NumberFormat;
-import java.util.Map;
 
 /**
  * Created by Seongju Jo. On 2020-03-15 02:03:20
@@ -40,22 +40,23 @@ public class DefaultLogWriter implements LogWriter {
     @Override
     public void write(LogStatistic logStatistic) throws IOException {
 
-        Writer fileWriter = new FileWriter(outputPath);
-
-        BufferedWriter bufferedWriter = null;
-
-        try {
-            bufferedWriter = new BufferedWriter(fileWriter);
+        try (
+                Writer fileWriter = new FileWriter(outputPath);
+                BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
 
             //
             // 최다호출 API KEY
             //
             bufferedWriter.write("최다호출 API KEY");
-            for (Map.Entry<String, Integer> entry : logStatistic.getApiKeyRank().entrySet()) {
-                bufferedWriter.newLine();
-                bufferedWriter.write(entry.getKey());
-                break;
-            }
+            logStatistic.getApiKeyRank().entrySet().stream().limit(1).forEach(entry -> {
+                try {
+                    bufferedWriter.newLine();
+                    bufferedWriter.write(entry.getKey());
+                } catch (IOException e) {
+                    throw new WriteLogException(e);
+                }
+            });
+
             bufferedWriter.newLine();
             bufferedWriter.newLine();
 
@@ -63,15 +64,15 @@ public class DefaultLogWriter implements LogWriter {
             // 상위 3개의 API Service ID 와 각각의 요청 수
             //
             bufferedWriter.write("상위 3개의 API Service ID 와 각각의 요청 수");
-            int i = 0;
-            for (Map.Entry<String, Integer> entry : logStatistic.getServiceRank().entrySet()) {
-                if (i >= 3) {
-                    break;
+            logStatistic.getServiceRank().entrySet().stream().limit(3).forEach(entry -> {
+                try {
+                    bufferedWriter.newLine();
+                    bufferedWriter.write(entry.getKey() + " : " + entry.getValue());
+                } catch (IOException e) {
+                    throw new WriteLogException(e);
                 }
-                bufferedWriter.newLine();
-                bufferedWriter.write(entry.getKey() + " : " + entry.getValue());
-                i++;
-            }
+            });
+
             bufferedWriter.newLine();
             bufferedWriter.newLine();
 
@@ -79,19 +80,19 @@ public class DefaultLogWriter implements LogWriter {
             // 웹브라우저별 사용 비율
             //
             bufferedWriter.write("웹브라우저별 사용 비율");
-            for (Map.Entry<String, Integer> entry : logStatistic.getBrowserRank().entrySet()) {
-                bufferedWriter.newLine();
-                double percent = (double)entry.getValue() / (double)logStatistic.getLogTotal() * 100;
-                String percentAsText = NUMBER_FORMAT.format(percent) + "%";
-                bufferedWriter.write(entry.getKey() + " : " + percentAsText);
-            }
-            bufferedWriter.newLine();
-            bufferedWriter.newLine();
+            logStatistic.getBrowserRank().forEach((key, value) -> {
+                try {
+                    bufferedWriter.newLine();
+                    double percent = (double) value / (double) logStatistic.getLogTotal() * 100;
+                    String percentAsText = NUMBER_FORMAT.format(percent) + "%";
+                    bufferedWriter.write(key + " : " + percentAsText);
+                } catch (IOException e) {
+                    throw new WriteLogException(e);
+                }
+            });
 
-        } finally {
-            if (bufferedWriter != null) {
-                bufferedWriter.close();
-            }
+            bufferedWriter.newLine();
+            bufferedWriter.newLine();
         }
     }
 }

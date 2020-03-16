@@ -12,11 +12,11 @@ public class LogStatistic {
 
     private int logTotal;
 
-    private Map<String, Integer> apiKeyRank = new HashMap<>();
+    private Map<String, Integer> apiKeyRank;
 
-    private Map<String, Integer> serviceRank = new LinkedHashMap<>();
+    private Map<String, Integer> serviceRank;
 
-    private Map<String, Integer> browserRank = new LinkedHashMap<>();
+    private Map<String, Integer> browserRank;
 
     private LogStatistic() {
 

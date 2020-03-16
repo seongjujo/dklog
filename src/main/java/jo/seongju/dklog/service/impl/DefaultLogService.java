@@ -30,46 +30,39 @@ public class DefaultLogService implements LogService {
     @Override
     public LogStatistic aggregate(String filePath) throws IOException, LogException {
 
-        Reader reader = new FileReader(filePath);
-        BufferedReader bufferedReader = new BufferedReader(reader);
+        try (InputStream inputStream = new FileInputStream(filePath)) {
 
-        return aggregate(bufferedReader);
+            return aggregate(inputStream);
+        }
     }
 
     @Override
     public LogStatistic aggregate(InputStream inputStream) throws IOException, LogException {
 
-        Reader reader = new InputStreamReader(inputStream);
-        BufferedReader bufferedReader = new BufferedReader(reader);
+        try (Reader reader = new InputStreamReader(inputStream);
+             BufferedReader bufferedReader = new BufferedReader(reader)) {
 
-        return aggregate(bufferedReader);
+            return aggregate(bufferedReader);
+        }
     }
 
-    @Override
-    public LogStatistic aggregate(BufferedReader bufferedReader) throws IOException, LogException {
+    private LogStatistic aggregate(BufferedReader bufferedReader) throws IOException, LogException {
 
         LogStatistic.Builder builder = LogStatistic.Builder.create();
 
-        try {
+        String line = null;
 
-            String line = null;
+        while ((line = bufferedReader.readLine()) != null) {
 
-            while ((line = bufferedReader.readLine()) != null) {
-
-                Log log = null;
-                try {
-                    log = read(line);
-                } catch (Exception e) {
-                    throw new ReadLogException(e);
-                }
-
-                if (STATUS_CODE_OK.equals(log.getStatusCode())) {
-                    builder.add(log);
-                }
+            Log log = null;
+            try {
+                log = read(line);
+            } catch (Exception e) {
+                throw new ReadLogException(e);
             }
-        } finally {
-            if (bufferedReader != null) {
-                bufferedReader.close();
+
+            if (STATUS_CODE_OK.equals(log.getStatusCode())) {
+                builder.add(log);
             }
         }
 

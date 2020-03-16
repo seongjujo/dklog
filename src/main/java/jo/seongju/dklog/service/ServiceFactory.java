@@ -11,23 +11,25 @@ import jo.seongju.dklog.service.impl.DefaultLogWriter;
  */
 public class ServiceFactory {
 
-    private static LogService LOG_SERVICE;
+    private static LogService logService;
 
     public static LogService getLogService() {
 
-        if (LOG_SERVICE == null) {
+        if (logService == null) {
 
             synchronized (ServiceFactory.class) {
 
-                if (LOG_SERVICE == null) {
+                if (logService == null) {
+
                     LogParser parser = new DefaultLogParser();
                     LogReader reader = new DefaultLogReader(parser);
                     LogWriter writer = new DefaultLogWriter();
-                    LOG_SERVICE = new DefaultLogService(reader, writer);
+
+                    logService = new DefaultLogService(reader, writer);
                 }
             }
         }
 
-        return LOG_SERVICE;
+        return logService;
     }
 }
